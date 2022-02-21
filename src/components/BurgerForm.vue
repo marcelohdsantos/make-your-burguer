@@ -1,7 +1,7 @@
 <template>
    <div>
-    <p>Componente de mensagem</p>
-    <form id="burger-form">
+   <Message :msg="msg" v-show="msg"/>
+    <form id="burger-form" @submit="createBurger">
         <div class="input-container">
             <label for="nome">Nome do Cliente: </label>
             <input type="text" id="nome" name="nome" v-model="nome" placeholder="Digite o seu nome...">
@@ -36,6 +36,8 @@
 </template> 
 
 <script>
+import Message from '../components/Message.vue';
+
 export default {
     name: "Burgerform",
     data() {
@@ -46,12 +48,12 @@ export default {
             nome: null,
             pao: null,
             carne: null,
-            opcionais: [],
-            status: "solicitado",
+            opcionais: [],           
             msg: null
         }
 
     },
+    
     methods: {
         async getIngredientes() {
             const req = await fetch("http://localhost:3000/ingredientes");
@@ -59,11 +61,49 @@ export default {
             this.paes = data.paes;
             this.carnes = data.carnes;
             this.opcionaisdata = data.opcionais;
+        },
+        async createBurger(e) {
+            e.preventDefault();
+            
+            const data = {
+                nome: this.nome,
+                carne: this.carne,
+                pao: this.pao,
+                opcionais: Array.from(this.opcionais),
+                status: "solicitado",
+             }
+
+             const dataJson = JSON.stringify(data);
+            
+             const req = await fetch("http://localhost:3000/burgers", {
+                 method: "POST",
+                 headers: { "Content-Type" : "application/json" }, //formatar o cabeçalho e dizer para o navegador que está enviando um json
+                 body: dataJson
+             });
+
+             const res = await req.json();
+             //mensagem de retorno que o pedido foi realizado.   
+             this.msg = `Pedido Nº ${res.id} realizado com sucesso!`
+
+             //limpando a mensagem de retorno
+             setTimeout(() => {
+                 this.msg = "";
+             }, 3000);
+
+             //limpar os campos depois de enviar o hamburguer
+             this.nome = "";
+             this.carne = "";
+             this.pao = "";
+             this.opcionais = "";
+             
         }
     },
     mounted() {
         this.getIngredientes();
-    }
+    },
+    components: {
+        Message
+    },
 }
 </script>
 
